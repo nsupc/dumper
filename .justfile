@@ -11,4 +11,4 @@ buildw:
 
 buildm:
     echo "build mac"
-    GOOS=darwin GOARCH=amd64 go build -o bin/dumper_m main.go
+    GOOS=darwin GOARCH=arm64 go build -o bin/dumper_m main.go
