@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 
 	"github.com/codeclysm/extract/v3"
@@ -106,14 +107,7 @@ func downloadDumps(args Args) error {
 	if args.nations {
 		log.Println("Downloading nation dump...")
 
-		if args.nOutDir == "" {
-			args.nOutDir = "./"
-		}
-
-		filename := fmt.Sprintf("nations_%s.xml.gz", time.Now().Format("2006_01_02"))
-		if args.decompress {
-			strings.Replace(filename, ".gz", "", 1)
-		}
+		filename := filepath.Join(args.nOutDir, fmt.Sprintf("nations_%s.xml", time.Now().Format("2006_01_02")))
 
 		if args.dryRun {
 			if err := generateBlankOutputFile(filename); err != nil {
@@ -133,14 +127,7 @@ func downloadDumps(args Args) error {
 	if args.regions {
 		log.Println("Downloading region dump...")
 
-		if args.rOutDir == "" {
-			args.rOutDir = "./"
-		}
-
-		filename := fmt.Sprintf("regions_%s.xml.gz", time.Now().Format("2006_01_02"))
-		if args.decompress {
-			strings.Replace(filename, ".gz", "", 1)
-		}
+		filename := filepath.Join(args.rOutDir, fmt.Sprintf("regions_%s.xml", time.Now().Format("2006_01_02")))
 
 		if args.dryRun {
 			if err := generateBlankOutputFile(filename); err != nil {
@@ -168,15 +155,31 @@ func downloadDump(args Args, url string, filename string, client *http.Client) e
 	}
 	defer resp.Body.Close()
 
-	log.Println("Saving dump to ", filename)
-	err = extract.Archive(
-		context.Background(),
-		resp.Body,
-		filename,
-		nil,
-	)
-	if err != nil {
-		return err
+	if args.decompress {
+		log.Println("Saving dump to ", filename)
+		err = extract.Archive(
+			context.Background(),
+			resp.Body,
+			filename,
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+	} else {
+		filename += ".gz"
+		log.Println("Saving dump to", filename)
+
+		file, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		_, err = io.Copy(file, resp.Body)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
