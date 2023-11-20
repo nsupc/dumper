@@ -35,7 +35,7 @@ func main() {
 	app := &cli.App{
 		Name:    "dumper",
 		Usage:   "a simple utility for downloading NationStates nation and region dumps",
-		Version: "0.0.1",
+		Version: "0.1.0",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "user-agent",
